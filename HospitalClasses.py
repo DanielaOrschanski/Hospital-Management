@@ -180,9 +180,8 @@ class Doctor(Base):
         self.appointments = []
         self.patients = []
         self.orders = []
-        self.orders_requested = {}
-        self.orders_delivered = {}
-        #self.med_received = []
+        self.orders_requested = {} #store the id order with the date and time of its request
+        self.orders_delivered = {} #store the id order with the date and time of its deliver
 
     def __repr__(self):
         return self.name
@@ -205,7 +204,7 @@ class Doctor(Base):
         return req
 
     def stats(self, order):
-        date_requested = self.orders_requested.get(str(order.id))
+        date_requested = self.orders_requested.get(str(order.id)) #the date when it was requested
         date_delivered = self.orders_delivered.get(str(order.id))
         wait = date_delivered - date_requested
         return (f"The time between the request and the delivery was: {wait}", wait)
@@ -245,11 +244,9 @@ class Pharmacy(Base):
 Base.metadata.create_all(engine)
 #----------------------------------------------------------------------------------
 class Request:
-    def __init__(self, from_, to_): #all the requests start being not approved
+    def __init__(self, from_, to_):
         self.from_ = from_.id
         self.to_ = to_.id
-        #self.approved = approved
-        #self.id = str(uuid.uuid4())
 
     def __repr__(self):
         return self.id
@@ -262,26 +259,21 @@ class AppointmentRequest(Request, Base):
     time = Column(String)
     duration = Column(Integer)
     cost = Column(Integer)
-    from_ = Column(String, ForeignKey('patient.id'), nullable=True)
+    from_ = Column(String, ForeignKey('patient.id'), nullable=True) #make reference to the patients between their ids
     #patient_id = Column(String, ForeignKey('patient.id'), nullable=True)
     #patient = relationship("Patient", back_populates="appointments")
-    to_ = Column(String, ForeignKey('doctor.id'), nullable=True)
+    to_ = Column(String, ForeignKey('doctor.id'), nullable=True) ##make reference to the doctors between their ids
     #doctor_id = Column(String, ForeignKey('doctor.id'), nullable=True)
     #doctor = relationship("Doctor", back_populates="appointments")
 
     def __init__(self, from_, to_, date, time, duration, cost):
-        Request.__init__(self, from_, to_)
-        #self.from_ = from_.name
-        #self.to_ = to_.name
-        #self.appointment = appointment
+        Request.__init__(self, from_, to_) #inherit the attributes
         self.date = date
         self.time = time
         self.duration = duration
         self.cost = cost
         self.id = str(uuid.uuid4())
         self.approved = 0
-        #self.doctorr = None
-        #self.patientt = None
 
     def approve(self, hospital):
         # to_ = doctor
@@ -303,10 +295,7 @@ class AppointmentRequest(Request, Base):
                             for appointment in doctor.appointments:
                                 if self.id == appointment.id:
                                     appointment.approved = 1
-                            #doctor.appointments.append(self)
 
-                            #self.appointment.doctorr = self.to_
-                            #self.appointment.patientt = self.from_
                             print("The request of appointment from ", self.from_, "with the doctor ", self.to_,
                                   "has been approved")
                             session.commit()
@@ -356,8 +345,7 @@ class MedicineRequest(Request, Base):
                         if self in doctor.orders:
                             self.approved += 1
                             pharmacy.requests_record.update({"id" : self.id, "time": datetime.datetime.now()})
-                            #pharmacy.requests.append(self)  # add the appointment to the patient
-                            #doctor.orders.append(self)
+
                             session.commit()
                             print("The request of medicine from doctor ", self.from_, "to the pharmacy ", self.to_, "has been approved")
 
